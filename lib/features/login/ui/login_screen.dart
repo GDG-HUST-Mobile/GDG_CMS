@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:gdgocms/features/login/model/components/textfield.dart';
 import 'package:gdgocms/features/login/ui/forgotpass_popup.dart';
 import 'package:gdgocms/features/login/ui/signup_popup.dart';
-import 'package:gdgocms/features/login/ui/styles.dart';
+import 'package:gdgocms/core/theme/app_colors.dart';
+import 'package:gdgocms/core/theme/app_fonts.dart';
+import 'package:gdgocms/core/theme/app_theme.dart';
+import 'package:gdgocms/core/theme/app_images.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,217 +15,194 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // text editting controller
   final usernameController = TextEditingController();
-
   final passwordController = TextEditingController();
-
   bool checkAccount = true;
+  bool _isPasswordObscured = true;
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    final Size size = MediaQuery.of(context).size;
+    final double screenHeight = size.height;
+    final double screenWidth = size.width;
+
     return Scaffold(
-      backgroundColor: AppColor.backgroundColorLight,
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Center(
           child: Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                   child: Column(
                     children: [
-                      SizedBox(height: size.height * 0.03),
-                      // logo
-                      Image.asset(
-                        "assets/login_screen/logo_GDG.png",
-                        scale: 2.8,
-                      ),
-
-                      SizedBox(height: size.height * 0.07),
+                      SizedBox(height: screenHeight * 0.03),
 
                       SizedBox(
-                        width: size.width * 0.9,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // login text
-                            Text(
-                              "Sign in",
-                              style:
-                                  MyFamilyFont(
-                                    fontsize: 34,
-                                    fontcolor: Colors.black,
-                                  ).thinTextStyle,
-                            ),
+                        width: screenWidth * 0.9,
+                        child: Image.asset(AppImages.logoGdg, fit: BoxFit.contain),
+                      ),
 
-                            SizedBox(height: 25),
+                      SizedBox(height: screenHeight * 0.05),
 
-                            // username field
-                            Text(
-                              "ID",
-                              style:
-                                  MyFamilyFont(
-                                    fontsize: 16,
-                                    fontcolor: Colors.black,
-                                  ).boldTextStyle,
-                            ),
-                            SizedBox(height: 5),
-                            MyTextField(
-                              controller: usernameController,
-                              hintText: "Your ID",
-                              obscureText: false,
-                            ),
+                      // Bỏ SizedBox bao ngoài, dùng padding của SingleChildScrollView
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // login text
+                          Text("Sign in", style: AppFonts.displayLargeText()),
 
-                            SizedBox(height: 30),
+                          SizedBox(height: screenHeight * 0.03),
 
-                            // password field
-                            Text(
-                              "Password",
-                              style:
-                                  MyFamilyFont(
-                                    fontsize: 16,
-                                    fontcolor: Colors.black,
-                                  ).boldTextStyle,
-                            ),
-                            SizedBox(height: 5),
-                            MyTextField(
-                              controller: passwordController,
-                              hintText: "Enter your password",
-                              obscureText: true,
-                            ),
+                          // username field
+                          Text("ID", style: AppFonts.titleLargeText()),
+                          SizedBox(height: screenHeight * 0.01),
+                          MyTextField(
+                            controller: usernameController,
+                            hintText: "Your ID",
+                            obscureText: false,
+                          ),
 
-                            SizedBox(height: 5),
-                            // forgot password
-                            SizedBox(
-                              width: size.width * 0.9,
-                              child: GestureDetector(
-                                onTap: () {
-                                  showForgotPasswordDialog(context);
-                                },
-                                child: Text(
-                                  "Forgot Password?",
-                                  textAlign: TextAlign.right,
-                                  style:
-                                      MyFamilyFont(
-                                        fontsize: 16,
-                                        fontcolor: Color(0xFF1F87FC),
-                                      ).boldTextStyle,
+                          SizedBox(height: screenHeight * 0.03),
+
+                          // password field
+                          Text("Password", style: AppFonts.titleLargeText()),
+                          SizedBox(height: screenHeight * 0.01),
+                          MyTextField(
+                            controller: passwordController,
+                            hintText: "Enter your password",
+                            obscureText: _isPasswordObscured,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                color: AppColors.textSecondary,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordObscured = !_isPasswordObscured;
+                                });
+                              },
+                            ),
+                          ),
+
+                          SizedBox(height: screenHeight * 0.01),
+
+                          // forgot password
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: GestureDetector(
+                              onTap: () {
+                                showForgotPasswordDialog(context);
+                              },
+                              child: Text(
+                                "Forgot Password?",
+                                style: AppFonts.titleLargeText(
+                                  color: AppColors.textLink,
                                 ),
                               ),
                             ),
+                          ),
 
-                            SizedBox(height: 15),
-                          ],
+                          SizedBox(height: screenHeight * 0.02),
+                        ],
+                      ),
+
+                      if (!checkAccount)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: screenHeight * 0.015),
+                          child: Text(
+                            "Oops! Incorrect password. Try again!",
+                            textAlign: TextAlign.center,
+                            style: AppFonts.errorMediumText(
+                              color: AppColors.textError,
+                            )
+                          ),
                         ),
-                      ),
-                      Text(
-                        checkAccount
-                            ? ""
-                            : "Oops! Incorrect password. Try again!",
-                        textAlign: TextAlign.center,
-                        style:
-                            MyFamilyFont(
-                              fontsize: 14,
-                              fontcolor: Colors.red,
-                            ).thinTextStyle,
-                      ),
-
-                      SizedBox(height: 10),
 
                       // signin button
                       SizedBox(
-                        width: size.width * 0.75,
-                        height: 60,
+                        width: screenWidth * 0.75,
                         child: ElevatedButton(
                           onPressed: () {
-                            checkAccount = false;
+                            setState(() {
+                              checkAccount = false;
+                            });
                           },
-                          style: myHeadButton,
-                          child: Text(
-                            "Sign In",
-                            style: MyFamilyFont(fontsize: 22).boldTextStyle,
+                          style: AppButtonStyles.primary.copyWith(
+                            padding: WidgetStateProperty.all(
+                              EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                            ),
                           ),
+                          child: Text("Sign In", style: AppFonts.buttonLarge()),
                         ),
                       ),
 
-                      SizedBox(height: 30),
+                      SizedBox(height: screenHeight * 0.04),
 
                       // others signin
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                thickness: 0.5,
-                                color: Colors.grey[400],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(thickness: 0.5, color: Colors.grey[400]),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                            child: Text(
+                              "Or continue with",
+                              style: AppFonts.headlineSmallText(
+                                color: AppColors.textSecondary,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 25.0,
-                              ),
-                              child: Text(
-                                "Or continue with",
-                                style:
-                                    MyFamilyFont(
-                                      fontsize: 18,
-                                      fontcolor: Color(0xFF666C73),
-                                    ).boldTextStyle,
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                thickness: 0.5,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ],
+                          ),
+                          Expanded(
+                            child: Divider(thickness: 0.5, color: Colors.grey[400]),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: screenHeight * 0.03),
+
+                      SizedBox(
+                        width: screenWidth * 0.15,
+                        height: screenWidth * 0.15,
+                        child: ClipOval(
+                          child: Image.asset(AppImages.googleIcon, fit: BoxFit.cover),
                         ),
                       ),
 
-                      SizedBox(height: 25),
+                      SizedBox(height: screenHeight * 0.03),
 
-                      Image.asset(
-                        "assets/login_screen/google_icon.png",
-                        scale: 2,
-                      ),
-
-                      const SizedBox(height: 25),
                       // register
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             "Not a member?",
-                            style:
-                                MyFamilyFont(
-                                  fontsize: 18,
-                                  fontcolor: Color(0xFF666C73),
-                                ).regularTextStyle,
+                            style: AppFonts.headlineSmallText(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           GestureDetector(
                             onTap: () {
                               showSignUpDialog(context);
                             },
                             child: Text(
                               "Create an account",
-                              style:
-                                  MyFamilyFont(
-                                    fontsize: 18,
-                                    fontcolor: Color(0xFF1F87FC),
-                                  ).regularTextStyle,
+                              style: AppFonts.headlineSmallText(
+                                color: AppColors.textLink,
+                              ),
                             ),
                           ),
                         ],
                       ),
+                      SizedBox(height: screenHeight * 0.02),
                     ],
                   ),
                 ),
               ),
-              Image.asset("assets/login_screen/footer.png"),
+              Image.asset(AppImages.loginFooter),
             ],
           ),
         ),
