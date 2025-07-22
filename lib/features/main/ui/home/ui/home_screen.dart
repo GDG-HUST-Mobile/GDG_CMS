@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: "Tools",
                         description: "See GDGoC-HUST’s other products",
                         backgroundColor: hexToColor('#fadbd8'),
-                        iconBackgroundColor: hexToColor("#FE2B25")
+                        iconBackgroundColor: hexToColor("#fadbd8")
                     ),
                     const SizedBox(height: 10.0,),
                     FeatureCard(

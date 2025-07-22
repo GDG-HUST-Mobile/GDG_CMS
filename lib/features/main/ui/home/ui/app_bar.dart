@@ -13,6 +13,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         padding: const EdgeInsets.all(8),
         child: AppBar(
           // automaticallyImplyLeading: true,
+          centerTitle: true,
           title: SizedBox(
             width: 60.0,
             height: 40.0,
