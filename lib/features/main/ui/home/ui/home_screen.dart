@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 10.0,),
                     FeatureCard(
-                        imageAsset: 'assets/friends.png',
+                        imageAsset: 'assets/teamwork 1.png',
                         title: "Teammates",
                         description: "Missing teammates to join contests? Here they are",
                         backgroundColor: hexToColor('#d6eaf8'),
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 10.0,),
                     FeatureCard(
-                        imageAsset: 'assets/podium.png',
+                        imageAsset: 'assets/podium 1.png',
                         title: "Leaderboards",
                         description: "See the current top rankings of the leaderboard",
                         backgroundColor: hexToColor('#a3e4d7'),
@@ -67,15 +67,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 10.0,),
                     FeatureCard(
-                        imageAsset: 'assets/tools.png',
+                        imageAsset: 'assets/support.png',
                         title: "Tools",
                         description: "See GDGoC-HUST’s other products",
                         backgroundColor: hexToColor('#fadbd8'),
-                        iconBackgroundColor: hexToColor("#fadbd8")
+                        iconBackgroundColor: hexToColor("#FE2B25")
                     ),
                     const SizedBox(height: 10.0,),
                     FeatureCard(
-                        imageAsset: 'assets/cogwheel.png',
+                        imageAsset: 'assets/setting (1) 1.png',
                         title: "Settings",
                         description: "Language, themes, bugs, about us,...",
                         backgroundColor: hexToColor('#eaeded'),
