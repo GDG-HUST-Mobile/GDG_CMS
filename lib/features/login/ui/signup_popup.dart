@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gdgocms/features/login/model/components/textfield.dart';
+import 'package:gdgocms/features/login/ui/components/textfield.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/theme/app_theme.dart';
