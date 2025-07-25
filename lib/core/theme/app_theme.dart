@@ -53,7 +53,33 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundDark,
-      // Add dark theme configuration here when needed
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.backgroundDark,
+        error: AppColors.error,
+        onPrimary: AppColors.textOnPrimary,
+        onSecondary: AppColors.textOnPrimary,
+        onSurface: AppColors.textDarkTheme,
+        onError: AppColors.textOnPrimary,
+      ),
+      textTheme: TextTheme(
+        displayLarge: AppFonts.displayLargeText(),
+        displayMedium: AppFonts.displayMediumText(),
+        displaySmall: AppFonts.displaySmallText(),
+        headlineLarge: AppFonts.headlineLargeText(),
+        headlineMedium: AppFonts.headlineMediumText(),
+        headlineSmall: AppFonts.headlineSmallText(),
+        titleLarge: AppFonts.titleLargeText(),
+        titleMedium: AppFonts.titleMediumText(),
+        titleSmall: AppFonts.titleSmallText(),
+        bodyLarge: AppFonts.bodyLargeText(),
+        bodyMedium: AppFonts.bodyMediumText(),
+        bodySmall: AppFonts.bodySmallText(),
+        labelLarge: AppFonts.labelLargeText(),
+        labelMedium: AppFonts.labelMediumText(),
+        labelSmall: AppFonts.labelSmallText(),
+      ),
     );
   }
 }

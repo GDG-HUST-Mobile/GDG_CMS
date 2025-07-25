@@ -19,6 +19,7 @@ class AppColors {
 
   // Text colors
   static const Color textPrimary = Colors.black;
+  static const Color textDarkTheme = Colors.white;
   static const Color textSecondary = Color(0xFF666C73);
   static const Color textOnPrimary = Colors.white;
   static const Color textError = Colors.red;

@@ -6,7 +6,6 @@ class AppFonts {
   AppFonts._();
 
   // Font family
-  static const String primaryFont = 'Alexandria';
 
   // Font sizes
   static const double displayLarge = 34.0;
