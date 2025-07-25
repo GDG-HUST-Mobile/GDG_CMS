@@ -5,6 +5,8 @@ import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/theme/app_theme.dart';
 import 'package:gdgocms/core/theme/app_images.dart';
 
+import 'components/dialog_responsive_config.dart';
+
 // Function to show the custom dialog
 Future<void> showSignUpDialog(BuildContext context) async {
   // Controller for the email TextField
@@ -47,53 +49,7 @@ class _SignUpDialogContent extends StatelessWidget {
     final isMobile = size.width <= 600;
     final isSmallMobile = size.width <= 360;
 
-    // Responsive values
-    final dialogWidth =
-        isTablet
-            ? size.width *
-                0.4 // 40% of screen width on tablet
-            : isMobile
-            ? size.width *
-                0.9 // 90% of screen width on mobile
-            : 350.0;
-
-    final dialogMaxHeight =
-        isTablet
-            ? size.height *
-                0.8 // 80% of screen height on tablet
-            : size.height * 0.9; // 90% of screen height on mobile
-
-    final horizontalPadding = isSmallMobile ? 16.0 : 24.0;
-    final verticalPadding = isSmallMobile ? 16.0 : 24.0;
-
-    final titleFontSize =
-        isTablet
-            ? 20.0
-            : isSmallMobile
-            ? 15.0
-            : 17.0;
-    final labelFontSize =
-        isTablet
-            ? 18.0
-            : isSmallMobile
-            ? 14.0
-            : 16.0;
-    final buttonFontSize =
-        isTablet
-            ? 22.0
-            : isSmallMobile
-            ? 18.0
-            : 20.0;
-
-    final logoScale =
-        isTablet
-            ? 1.5
-            : isSmallMobile
-            ? 2.5
-            : 2.0;
-    final spacing = isSmallMobile ? 15.0 : 20.0;
-    final fieldSpacing = isSmallMobile ? 20.0 : 25.0;
-    final smallSpacing = isSmallMobile ? 3.0 : 5.0;
+    final config = DialogResponsiveConfig(context);
 
     return Dialog(
       backgroundColor: AppColors.backgroundLight,
@@ -102,14 +58,14 @@ class _SignUpDialogContent extends StatelessWidget {
       ),
       elevation: 5,
       child: Container(
-        width: dialogWidth,
+        width: config.dialogWidth,
         constraints: BoxConstraints(
           maxWidth: isTablet ? 500 : 400,
-          maxHeight: dialogMaxHeight,
+          maxHeight: config.dialogMaxHeight,
         ),
         padding: EdgeInsets.symmetric(
-          horizontal: horizontalPadding,
-          vertical: verticalPadding,
+          horizontal: config.horizontalPadding,
+          vertical: config.verticalPadding,
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -117,30 +73,30 @@ class _SignUpDialogContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               // Logo with responsive scaling
-              Image.asset(AppImages.appLogo, scale: logoScale),
-              SizedBox(height: spacing),
+              Image.asset(AppImages.appLogo, scale: config.logoScale),
+              SizedBox(height: config.spacing),
 
               // Title with responsive font size
               Text(
                 'Be a part of something great!',
                 style: AppFonts.customText(
-                  fontSize: titleFontSize,
+                  fontSize: config.titleFontSize,
                   fontWeight: AppFonts.semiBold,
                   color: AppColors.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: fieldSpacing),
+              SizedBox(height: config.fieldSpacing),
 
               // Form fields with responsive layout
               _buildFormFields(
                 context: context,
-                labelFontSize: labelFontSize,
-                fieldSpacing: fieldSpacing,
-                smallSpacing: smallSpacing,
+                labelFontSize: config.labelFontSize,
+                fieldSpacing: config.fieldSpacing,
+                smallSpacing: config.smallSpacing,
               ),
 
-              SizedBox(height: fieldSpacing),
+              SizedBox(height: config.fieldSpacing),
 
               // Sign Up Button with responsive styling
               SizedBox(

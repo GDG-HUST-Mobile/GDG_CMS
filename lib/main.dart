@@ -2,14 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:gdgocms/features/login/ui/login_screen.dart';
 import 'package:gdgocms/features/login/ui/welcome_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/utils/shared_prefs_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await SharedPrefsService.init();
 
-  bool hasSeenWelcome = prefs.getBool('hasSeenWelcome') ?? false;
+  bool hasSeenWelcome = SharedPrefsService.getSeenState();
 
   Widget initialScreen =
       hasSeenWelcome ? const LoginScreen() : const WelcomeScreen();
