@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gdgocms/features/login/ui/login_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/theme/app_theme.dart';
 import 'package:gdgocms/core/theme/app_images.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import 'factories/widget_factory.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -85,10 +87,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
               ),
 
-              // 2. Cụm PageView và Indicator
-              // [FIX] Bọc Stack trong SizedBox để giới hạn chiều cao và đưa nó lên trên
               SizedBox(
-                height: size.height * 0.4, // Cấp chiều cao khoảng 60% màn hình
+                height: size.height * 0.4,
                 child: Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
@@ -103,7 +103,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       children: [
                         _buildResponsivePageFrame(
                           context: context,
-                          child: SvgPicture.asset(AppImages.welcomeFrame1),
+                          child: SvgPicture.asset(AppImages.welcomeFrame1,),
                         ),
                         _buildResponsivePageFrame(
                           context: context,
@@ -141,7 +141,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
               ),
 
-              // [FIX] Thêm Spacer để đẩy nút xuống dưới cùng
               const Spacer(),
 
               // 3. Nút Continue / Start
@@ -153,40 +152,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: SizedBox(
                   width: size.width * 0.85,
                   height: size.height * 0.065,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (onLastPage) {
-                        _controller.nextPage(
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOut,
-                        );
-                      } else {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return const LoginScreen();
-                            },
-                          ),
-                        );
-                      }
-                    },
-                    style: AppButtonStyles.primary.copyWith(
-                      padding: WidgetStateProperty.all(
-                        EdgeInsets.symmetric(vertical: size.height * 0.015),
-                      ),
-                    ),
-                    child: Text(
-                      onLastPage ? "Continue" : "Start",
-                      style: AppFonts.customText(
-                        fontSize: responsiveFontSize(context, 18),
-                        fontWeight: AppFonts.semiBold,
-                        color: AppColors.textOnPrimary,
-                      ),
-                    ),
+                  child: PlatformWidgetFactory.instance.createButton(
+                      onPressed: () {
+                        if (onLastPage) {
+                          _controller.nextPage(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOut,
+                          );
+                        } else {
+                          context.pushReplacement('/login');
+                        }
+                      },
+                      child: Text(
+                              onLastPage ? "Continue" : "Start",
+                              style: AppFonts.buttonLarge()
+                              )
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),

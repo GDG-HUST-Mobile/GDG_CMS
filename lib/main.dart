@@ -1,37 +1,30 @@
 // main.dart
 import 'package:flutter/material.dart';
-import 'package:gdgocms/features/login/ui/login_screen.dart';
-import 'package:gdgocms/features/login/ui/welcome_screen.dart';
-
-import 'core/utils/shared_prefs_service.dart';
+import 'package:gdgocms/core/theme/app_theme.dart';
+import 'core/router/app_router.dart';
+import 'package:gdgocms/core/utils/shared_prefs_service.dart';
+import 'features/login/ui/factories/widget_factory.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await SharedPrefsService.init();
+  PlatformWidgetFactory.init();
 
-  bool hasSeenWelcome = SharedPrefsService.getSeenState();
-
-  Widget initialScreen =
-      hasSeenWelcome ? const LoginScreen() : const WelcomeScreen();
-
-  runApp(MyApp(initialScreen: initialScreen));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final Widget initialScreen;
-
-  const MyApp({super.key, required this.initialScreen});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      title: 'GDG-CMS',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: initialScreen,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
+      routerConfig: AppRouter.router,
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/theme/app_theme.dart';
 
+import 'factories/widget_factory.dart';
+
 // Function to show the custom dialog
 Future<void> showForgotPasswordDialog(BuildContext context) async {
   // Controller for the email TextField
@@ -62,18 +64,9 @@ Future<void> showForgotPasswordDialog(BuildContext context) async {
               SizedBox(
                 width: double.infinity,
                 height: 60,
-                child: ElevatedButton(
-                  style: AppButtonStyles.primary.copyWith(
-                    // Dùng padding để kiểm soát kích thước button
-                    padding: WidgetStateProperty.all(
-                      EdgeInsets.symmetric(vertical: screenHeight * 0.02),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                  child: Text('Reset password', style: AppFonts.buttonLarge()),
-                ),
+                child: PlatformWidgetFactory.instance.createButton(
+                    onPressed: () {Navigator.of(dialogContext).pop();},
+                    child: Text('Reset password', style: AppFonts.buttonLarge())),
               ),
             ],
           ),

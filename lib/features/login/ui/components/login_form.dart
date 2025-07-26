@@ -10,6 +10,7 @@ import 'package:gdgocms/features/login/ui/forgotpass_popup.dart';
 import 'package:gdgocms/features/login/ui/signup_popup.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../factories/widget_factory.dart';
 
 class LoginForm extends StatelessWidget {
   final TextEditingController usernameController;
@@ -80,21 +81,10 @@ class LoginForm extends StatelessWidget {
               style: AppFonts.errorMediumText(color: AppColors.textError),
             ),
           ),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onSignIn,
-            style: AppButtonStyles.primary.copyWith(
-              padding: WidgetStateProperty.all(
-                EdgeInsets.symmetric(
-                  vertical: (screenWidth < 500) ? 14 : 20,
-                  horizontal: 24,
-                ),
-              ),
-            ),
-            child: Text("Sign In", style: AppFonts.buttonLarge()),
-          ),
-        ),
+
+            PlatformWidgetFactory.instance.createButton(onPressed: onSignIn,
+    child: Text("Sign In", style: AppFonts.buttonLarge()), height: (screenWidth < 500) ? 14 : 20),
+
         const SizedBox(height: 32),
         Row(
           children: [
@@ -108,15 +98,11 @@ class LoginForm extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Center(
-          child: IconButton(
-            onPressed: () {},
-            icon: ClipOval(child: Image.asset(AppImages.googleIcon,
-              width: 48.0,
-              height: 48.0,
-              fit: BoxFit.cover,)),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
+          child: PlatformWidgetFactory.instance.createIconButton(onPressed: () {},
+              icon: ClipOval(child: Image.asset(AppImages.googleIcon,
+                width: 48.0,
+                height: 48.0,
+                fit: BoxFit.cover,))),
         ),
         const SizedBox(height: 24),
         Row(

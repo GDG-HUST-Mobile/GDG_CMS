@@ -8,7 +8,7 @@ class DialogResponsiveConfig {
 
   DialogResponsiveConfig(this.context)
       : size = MediaQuery.of(context).size,
-        isTablet = MediaQuery.of(context).size.width > 600,
+        isTablet = MediaQuery.of(context).size.width > 720,
         isSmallMobile = MediaQuery.of(context).size.width <= 360;
 
   // --- Dimensions ---
