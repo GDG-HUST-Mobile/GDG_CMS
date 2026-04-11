@@ -4,6 +4,7 @@ import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/network/api_service.dart';
 import 'package:gdgocms/features/main/ui/home/ui/home_screen.dart';
+import 'package:gdgocms/features/login/ui/register_screen.dart';
 
 /// login_screen.dart
 /// Layer: Presentation
@@ -255,7 +256,11 @@ class _SignInScreenState extends State<SignInScreen> {
                                 style: TextStyle(fontSize: safeHeight * 0.018),
                               ),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const RegisterScreen()));
+                                  },
                                 child: Text(
                                   "Create an account",
                                   style: AppTextStyles.body1.copyWith(
