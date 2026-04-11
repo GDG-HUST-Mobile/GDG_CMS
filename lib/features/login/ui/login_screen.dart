@@ -111,10 +111,11 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(height: safeHeight * 0.05),
 
                         // Nhãn hiệu/Logo chương trình
-                        Image.asset(
-                          'assets/images/label.png',
-                          height: safeHeight * 0.06,
+                        SvgPicture.asset(
+                          'assets/images/gdsc_hust_horizontal_colored-cropped.svg',
+                          width: screenWidth * 0.9,
                           fit: BoxFit.contain,
+                          alignment: Alignment.center,
                         ),
 
                         SizedBox(height: safeHeight * 0.06),
