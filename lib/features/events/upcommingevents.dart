@@ -20,6 +20,7 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
   List<Map<String, dynamic>> _events = <Map<String, dynamic>>[];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isListView = false;
 
   @override
   void initState() {
@@ -37,7 +38,9 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
       http.Response response = await _getEventsResponse();
 
       if (response.statusCode == 401 || response.statusCode == 403) {
-        debugPrint('Token expired/invalid (Status: ${response.statusCode}), attempting refresh...');
+        debugPrint(
+          'Token expired/invalid (Status: ${response.statusCode}), attempting refresh...',
+        );
 
         final String? refreshedToken = await _authService.refreshToken();
 
@@ -220,6 +223,21 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back, color: Colors.black),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isListView = !_isListView;
+              });
+            },
+            icon: Icon(
+              _isListView ? Icons.style_outlined : Icons.view_list_rounded,
+              color: Colors.black,
+            ),
+            tooltip: _isListView ? 'Card view' : 'List view',
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -227,16 +245,19 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
           ? _buildErrorState()
           : _events.isEmpty
           ? _buildEmptyState()
-          : Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.85,
-                height: 520,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: _buildCardStack(),
-                ),
-              ),
-            ),
+          : _isListView
+          ? _buildListView()
+          : _buildCardsView(),
+    );
+  }
+
+  Widget _buildCardsView() {
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.85,
+        height: 520,
+        child: Stack(clipBehavior: Clip.none, children: _buildCardStack()),
+      ),
     );
   }
 
@@ -344,6 +365,121 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildListView() {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+      itemCount: _events.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final Map<String, dynamic> eventData = _events[index];
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () {
+              context.push(AppRoutes.eventDetail, extra: eventData);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.green.shade300, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.event,
+                      color: Colors.green.shade600,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          eventData['title'] ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        if ((eventData['time'] ?? '').toString().isNotEmpty)
+                          _buildListMetaRow(
+                            Icons.access_time_filled,
+                            (eventData['time'] ?? '').toString(),
+                            Colors.blue,
+                          ),
+                        if ((eventData['location'] ?? '').toString().isNotEmpty)
+                          _buildListMetaRow(
+                            Icons.location_on,
+                            (eventData['location'] ?? '').toString(),
+                            Colors.red,
+                          ),
+                        if ((eventData['type'] ?? '').toString().isNotEmpty)
+                          _buildListMetaRow(
+                            Icons.tag,
+                            (eventData['type'] ?? '').toString(),
+                            Colors.orange,
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.chevron_right, color: Colors.grey),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildListMetaRow(IconData icon, String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
