@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:gdgocms/core/network/api_service.dart';
 import 'package:gdgocms/core/router/app_router.dart';
 
 class UpcomingEventsScreen extends StatefulWidget {
@@ -11,44 +15,184 @@ class UpcomingEventsScreen extends StatefulWidget {
 }
 
 class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
-  final List<Map<String, dynamic>> _events = [
-    {
-      'id': '1',
-      'title': 'Bonding Noel',
-      'time': 'Tuesday, 26 - 6:00pm',
-      'type': 'Offline',
-      'location': '2nd floor Alumni',
-      'description':
-          'Đây là chương trình giao lưu nội bộ chào mừng giáng sinh. Sẽ có phát quà và trò chơi nhỏ. Yêu cầu dresscode màu đỏ hoặc xanh lá mạ!\nVui lòng có mặt đúng giờ để tham gia đầy đủ các minigame và ăn tiệc tối!',
-    },
-    {
-      'id': '2',
-      'title': 'Tech Talk 2024',
-      'time': 'Friday, 29 - 8:00pm',
-      'type': 'Online',
-      'location': 'Google Meet',
-      'description':
-          'Chia sẻ về lộ trình trở thành kỹ sư phần mềm chuyên nghiệp. Gặp gỡ các anh chị Alumni có nhiều năm kinh nghiệm thực chiến.\nAgenda:\n- 8:00: Chào mừng\n- 8:15: Keynote Speaker\n- 9:00: Q&A',
-    },
-    {
-      'id': '3',
-      'title': 'Year End Party',
-      'time': 'Sunday, 31 - 7:00pm',
-      'type': 'Offline',
-      'location': 'Central Park',
-      'description':
-          'Lễ tổng kết hoạt động quý cuối năm. Toàn bộ các mảng sẽ có tiết mục văn nghệ riêng, có buffet nướng ngoài trời thả ga.\nSẽ có màn trao giải vinh danh các thành viên xuất sắc nhất trong năm!',
-    },
-    {
-      'id': '4',
-      'title': 'Giao hữu cầu lông',
-      'time': 'Monday, 1 - 5:00pm',
-      'type': 'Offline',
-      'location': 'Sân ĐH Bách Khoa',
-      'description':
-          'Rèn luyện sức khoẻ giữa tuần. Chuẩn bị tự mang theo vợt nếu có. CLB sẽ tài trợ nước uống và cầu tiêu chuẩn.\nNếu trời mưa thì sự kiện sẽ bị dời sang tuần sau nhé!',
-    },
-  ];
+  final BaseApiService _apiService = BaseApiService();
+  final AuthService _authService = AuthService();
+  List<Map<String, dynamic>> _events = <Map<String, dynamic>>[];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchEvents();
+  }
+
+  Future<void> _fetchEvents() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      http.Response response = await _getEventsResponse();
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        debugPrint('Token expired/invalid (Status: ${response.statusCode}), attempting refresh...');
+
+        final String? refreshedToken = await _authService.refreshToken();
+
+        if (refreshedToken != null) {
+          // Thử gọi lại API một lần nữa với token mới
+          response = await _getEventsResponse();
+        } else {
+          // Nếu không refresh được, yêu cầu người dùng đăng nhập lại
+          setState(() {
+            _errorMessage = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+      if (response.statusCode != 200) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'Không thể tải dữ liệu sự kiện (${response.statusCode}).';
+        });
+        return;
+      }
+
+      final dynamic decoded = jsonDecode(response.body);
+      final List<Map<String, dynamic>> mapped = _extractEventsList(
+        decoded,
+      ).map(_mapEvent).toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _events = mapped;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Mất kết nối hoặc có lỗi xảy ra. Vui lòng thử lại.';
+      });
+    }
+  }
+
+  Future<http.Response> _getEventsResponse() async {
+    final Map<String, String> headers = await _apiService.getHeaders();
+    return http.get(
+      Uri.parse('${AuthService.baseUrl}/events'),
+      headers: headers,
+    );
+  }
+
+  List<Map<String, dynamic>> _extractEventsList(dynamic decoded) {
+    if (decoded is List) {
+      return decoded
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+
+    if (decoded is Map<String, dynamic>) {
+      final dynamic events =
+          decoded['events'] ?? decoded['data'] ?? decoded['items'];
+      if (events is List) {
+        return events
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    }
+
+    return <Map<String, dynamic>>[];
+  }
+
+  Map<String, dynamic> _mapEvent(Map<String, dynamic> raw) {
+    final String id = _firstNonEmptyString(raw, const ['id', '_id']) ?? '';
+    final String title =
+        _firstNonEmptyString(raw, const ['title', 'name']) ?? 'Untitled Event';
+    final String description =
+        _firstNonEmptyString(raw, const [
+          'description',
+          'content',
+          'details',
+          'summary',
+        ]) ??
+        '';
+    final String location =
+        _firstNonEmptyString(raw, const ['location', 'venue', 'address']) ?? '';
+    final String type =
+        _firstNonEmptyString(raw, const ['type', 'mode', 'format']) ?? '';
+    final String time = _buildTime(raw);
+
+    return <String, dynamic>{
+      'id': id.isNotEmpty ? id : title,
+      'title': title,
+      'time': time,
+      'type': type,
+      'location': location,
+      'description': description,
+      'notifyTo': raw['notifyTo'],
+      'confirmed': raw['confirmed'],
+      'vote': raw['vote'],
+    };
+  }
+
+  String _buildTime(Map<String, dynamic> raw) {
+    final String? timeText = _firstNonEmptyString(raw, const [
+      'time',
+      'dateTime',
+      'startAt',
+      'startsAt',
+      'eventTime',
+    ]);
+    if (timeText != null) {
+      return timeText;
+    }
+
+    final String? date = _firstNonEmptyString(raw, const [
+      'date',
+      'startDate',
+      'eventDate',
+    ]);
+    final String? clock = _firstNonEmptyString(raw, const [
+      'startTime',
+      'hour',
+    ]);
+    if (date != null && clock != null) {
+      return '$date - $clock';
+    }
+    return date ?? '';
+  }
+
+  String? _firstNonEmptyString(Map<String, dynamic> raw, List<String> keys) {
+    for (final String key in keys) {
+      final dynamic value = raw[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+      if (value != null && value is! String) {
+        final String normalized = value.toString().trim();
+        if (normalized.isNotEmpty) {
+          return normalized;
+        }
+      }
+    }
+    return null;
+  }
 
   void _onSwipe(int index) {
     setState(() {
@@ -77,7 +221,11 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
         ),
       ),
-      body: _events.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? _buildErrorState()
+          : _events.isEmpty
           ? _buildEmptyState()
           : Center(
               child: SizedBox(
@@ -167,6 +315,35 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 72),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'Đã xảy ra lỗi khi tải dữ liệu.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _fetchEvents,
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
       ),
     );
   }

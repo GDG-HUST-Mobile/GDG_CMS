@@ -152,7 +152,7 @@ class BaseApiService {
     String? token = await _authService.getAccessToken();
     return {
       'Content-Type': 'application/json',
-      'authorization': 'Bearer $token',
+      'Authorization': 'Bearer $token',
     };
   }
 
