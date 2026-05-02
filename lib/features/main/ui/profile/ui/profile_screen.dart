@@ -1,33 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gdgocms/core/network/api_service.dart';
 import 'package:gdgocms/core/router/app_router.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
-import 'package:gdgocms/core/network/api_service.dart';
 
-/// profile_screen.dart
-/// Layer: Presentation
-/// Feature: Main | Profile
-/// Description: Quản lý giao diện thông tin cá nhân của người dùng.
-/// Cung cấp các thông tin định danh thành viên và chức năng đăng xuất an toàn khỏi hệ thống.
-
-/// [ProfileScreen] hiển thị hồ sơ người dùng và các tùy chọn thiết lập tài khoản.
-///
-/// Lớp này là một [StatelessWidget] vì dữ liệu hiện tại đang được load tĩnh hoặc
-/// lấy từ bộ nhớ cục bộ, không yêu cầu quản lý trạng thái phức tạp tại màn hình này.
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  /// [_handleLogout] thực hiện quy trình đăng xuất bảo mật.
-  ///
-  /// Quy trình thực hiện:
-  /// 1. Hiển thị [AlertDialog] để xác nhận ý định của người dùng.
-  /// 2. Gọi [AuthService.logout] để hủy session trên Server và xóa Local Data.
-  /// 3. Điều hướng về màn hình đăng nhập và dọn stack bằng router.
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+
+  bool _isLoading = true;
+  bool _isSaving = false;
+  String? _errorMessage;
+  Map<String, dynamic> _profile = <String, dynamic>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final Map<String, dynamic>? user = await _userService.fetchCurrentUser();
+      if (!mounted) {
+        return;
+      }
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Không thể tải thông tin tài khoản.';
+        });
+        return;
+      }
+
+      setState(() {
+        _profile = user;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Mất kết nối hoặc có lỗi xảy ra. Vui lòng thử lại.';
+      });
+    }
+  }
+
   Future<void> _handleLogout(BuildContext context) async {
-    // 1. Hiển thị thông báo xác nhận (Dialog)
-    bool? confirm = await showDialog(
+    final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Xác nhận đăng xuất"),
@@ -49,20 +85,168 @@ class ProfileScreen extends StatelessWidget {
     );
 
     if (confirm == true) {
-      // 2. Gọi API Logout từ Core Layer
-      final authService = AuthService();
-      await authService.logout();
-
+      await _authService.logout();
       if (context.mounted) {
-        // 3. Quay lại màn hình Login và xóa hết lịch sử các trang trước đó để đảm bảo bảo mật
         context.go(AppRoutes.login);
       }
     }
   }
 
+  Future<void> _openEditProfileDialog() async {
+    final TextEditingController firstNameController = TextEditingController(
+      text: (_profile['firstName'] ?? '').toString(),
+    );
+    final TextEditingController lastNameController = TextEditingController(
+      text: (_profile['lastName'] ?? '').toString(),
+    );
+    final TextEditingController emailController = TextEditingController(
+      text: (_profile['email'] ?? '').toString(),
+    );
+    String? dialogError;
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Cập nhật hồ sơ'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: firstNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'First Name',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: lastNameController,
+                      decoration: const InputDecoration(labelText: 'Last Name'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                    ),
+                    if (dialogError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        dialogError!,
+                        style: const TextStyle(color: AppColors.red),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _isSaving ? null : () => context.pop(false),
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () {
+                          final String email = emailController.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            setDialogState(() {
+                              dialogError = 'Email không hợp lệ.';
+                            });
+                            return;
+                          }
+                          context.pop(true);
+                        },
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Lưu'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final Map<String, dynamic>? updated = await _userService.updateCurrentUser(
+      firstName: firstNameController.text,
+      lastName: lastNameController.text,
+      email: emailController.text,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (updated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể cập nhật thông tin.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _profile = <String, dynamic>{..._profile, ...updated};
+    });
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Cập nhật hồ sơ thành công.')));
+  }
+
+  String _displayName() {
+    final String first = (_profile['firstName'] ?? '').toString().trim();
+    final String last = (_profile['lastName'] ?? '').toString().trim();
+    final String fullName = '$first $last'.trim();
+    if (fullName.isNotEmpty) {
+      return fullName;
+    }
+    final String username = (_profile['username'] ?? '').toString().trim();
+    if (username.isNotEmpty) {
+      return username;
+    }
+    return 'GDG Member';
+  }
+
+  String _username() {
+    final String username = (_profile['username'] ?? '').toString().trim();
+    return username.isNotEmpty ? '@$username' : '@member';
+  }
+
+  String _email() {
+    final String email = (_profile['email'] ?? '').toString().trim();
+    return email.isNotEmpty ? email : 'Chưa cập nhật';
+  }
+
+  String _role() {
+    final String role = (_profile['role'] ?? '').toString().trim();
+    return role.isNotEmpty ? role : 'Member';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Tính toán các thông số Responsive dựa trên kích thước màn hình
     final double screenWidth = MediaQuery.of(context).size.width;
     final double safeHeight =
         MediaQuery.of(context).size.height -
@@ -79,142 +263,173 @@ class ProfileScreen extends StatelessWidget {
         foregroundColor: Colors.black,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
-                child: Column(
-                  children: [
-                    SizedBox(height: safeHeight * 0.05),
-
-                    // Avatar đại diện: Placeholder với phong cách GDG
-                    CircleAvatar(
-                      radius: safeHeight * 0.07,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person,
-                        size: safeHeight * 0.08,
-                        color: AppColors.primary,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage != null
+            ? _buildErrorState()
+            : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.06,
                       ),
-                    ),
-
-                    SizedBox(height: safeHeight * 0.03),
-
-                    // Thông tin cơ bản của thành viên
-                    Text(
-                      "GDG Member",
-                      style: AppTextStyles.h3.copyWith(color: Colors.black),
-                    ),
-                    Text("@hust_member", style: AppTextStyles.subtitle2),
-
-                    SizedBox(height: safeHeight * 0.06),
-
-                    // Danh sách các mục thông tin (Menu Items)
-                    _buildProfileItem(
-                      context,
-                      Icons.badge,
-                      "Chuyên môn",
-                      "Mobile Developer",
-                      safeHeight,
-                    ),
-                    _buildProfileItem(
-                      context,
-                      Icons.email,
-                      "Email",
-                      "member@hust.edu.vn",
-                      safeHeight,
-                    ),
-                    _buildProfileItem(
-                      context,
-                      Icons.info_outline,
-                      "Về ứng dụng",
-                      "",
-                      safeHeight,
-                    ),
-
-                    SizedBox(height: safeHeight * 0.05),
-
-                    // Nút Đăng xuất với phong cách Outlined Red cảnh báo
-                    SizedBox(
-                      width: double.infinity,
-                      height: safeHeight * 0.07,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _handleLogout(context),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.red),
-                          shape: const StadiumBorder(),
-                        ),
-                        icon: const Icon(Icons.logout, color: AppColors.red),
-                        label: Text(
-                          "Đăng xuất",
-                          style: TextStyle(
-                            color: AppColors.red,
-                            fontSize: safeHeight * 0.02,
-                            fontWeight: FontWeight.bold,
+                      child: Column(
+                        children: [
+                          SizedBox(height: safeHeight * 0.05),
+                          CircleAvatar(
+                            radius: safeHeight * 0.07,
+                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            child: Icon(
+                              Icons.person,
+                              size: safeHeight * 0.08,
+                              color: AppColors.primary,
+                            ),
                           ),
-                        ),
+                          SizedBox(height: safeHeight * 0.03),
+                          Text(
+                            _displayName(),
+                            style: AppTextStyles.h3.copyWith(
+                              color: Colors.black,
+                            ),
+                          ),
+                          Text(_username(), style: AppTextStyles.subtitle2),
+                          SizedBox(height: safeHeight * 0.06),
+                          _buildProfileItem(
+                            icon: Icons.badge,
+                            title: "Chuyên môn",
+                            value: _role(),
+                            safeHeight: safeHeight,
+                          ),
+                          _buildProfileItem(
+                            icon: Icons.email,
+                            title: "Email",
+                            value: _email(),
+                            safeHeight: safeHeight,
+                            onTap: _openEditProfileDialog,
+                          ),
+                          _buildProfileItem(
+                            icon: Icons.edit_note,
+                            title: "Cập nhật hồ sơ",
+                            value: "Sửa họ tên và email",
+                            safeHeight: safeHeight,
+                            onTap: _openEditProfileDialog,
+                          ),
+                          SizedBox(height: safeHeight * 0.05),
+                          SizedBox(
+                            width: double.infinity,
+                            height: safeHeight * 0.07,
+                            child: OutlinedButton.icon(
+                              onPressed: _isSaving
+                                  ? null
+                                  : () => _handleLogout(context),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: AppColors.red),
+                                shape: const StadiumBorder(),
+                              ),
+                              icon: const Icon(
+                                Icons.logout,
+                                color: AppColors.red,
+                              ),
+                              label: Text(
+                                "Đăng xuất",
+                                style: TextStyle(
+                                  color: AppColors.red,
+                                  fontSize: safeHeight * 0.02,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SvgPicture.asset(
+                      'assets/images/logo.svg',
+                      height: 20,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.grey,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
+      ),
+    );
+  }
 
-            // Chân trang hiển thị thương hiệu GDG
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SvgPicture.asset(
-                'assets/images/logo.svg',
-                height: 20,
-                colorFilter: const ColorFilter.mode(
-                  Colors.grey,
-                  BlendMode.srcIn,
+  Widget _buildProfileItem({
+    required IconData icon,
+    required String title,
+    required String value,
+    required double safeHeight,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(icon, color: AppColors.grey, size: safeHeight * 0.03),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: AppTextStyles.subtitle3),
+                      Text(
+                        value,
+                        style: AppTextStyles.title2.copyWith(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                Icon(
+                  onTap != null ? Icons.edit : Icons.chevron_right,
+                  color: Colors.grey,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  /// [_buildProfileItem] khởi tạo một dòng thông tin trong hồ sơ.
-  ///
-  /// Giải thích "Why": Tách biệt thành hàm riêng để tái sử dụng giao diện (reusability)
-  /// và dễ dàng tùy chỉnh style đồng bộ cho toàn bộ danh sách menu.
-  Widget _buildProfileItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String value,
-    double safeHeight,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.grey, size: safeHeight * 0.03),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppTextStyles.subtitle3),
-              if (value.isNotEmpty)
-                Text(
-                  value,
-                  style: AppTextStyles.title2.copyWith(color: Colors.black),
-                ),
-            ],
-          ),
-          const Spacer(),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.red, size: 72),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'Có lỗi xảy ra khi tải hồ sơ.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.subtitle1.copyWith(color: Colors.black87),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadProfile,
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
       ),
     );
   }
