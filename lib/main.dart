@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:gdgocms/features/login/ui/onboarding_screen.dart';
-import 'package:gdgocms/features/main/ui/home/ui/home_screen.dart';
+import 'package:gdgocms/core/router/app_router.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 
@@ -17,7 +17,7 @@ import 'package:gdgocms/core/theme/app_fonts.dart';
 /// Thực hiện các tác vụ chuẩn bị:
 /// 1. Khởi tạo binding cho Flutter Framework.
 /// 2. Truy xuất [SharedPreferences] để kiểm tra `accessToken`.
-/// 3. Quyết định [initialScreen] (Màn hình khởi đầu) dựa trên trạng thái xác thực.
+/// 3. Quyết định route khởi đầu dựa trên trạng thái xác thực.
 void main() async {
   // Đảm bảo các dịch vụ của Flutter (như MethodChannel) đã sẵn sàng trước khi gọi async khác.
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,31 +27,34 @@ void main() async {
   final String? accessToken = prefs.getString('accessToken');
 
   // Điều hướng thông minh:
-  // - Đã có token: Chuyển thẳng vào [HomeScreen].
-  // - Chưa có/Token rỗng: Hiển thị giới thiệu [OnboardingScreen].
-  Widget initialScreen = (accessToken != null && accessToken.isNotEmpty)
-      ? const HomeScreen()
-      : const OnboardingScreen();
+  // - Đã có token: Chuyển thẳng vào Home.
+  // - Chưa có/Token rỗng: Hiển thị onboarding.
+  final String initialLocation = (accessToken != null && accessToken.isNotEmpty)
+      ? AppRoutes.home
+      : AppRoutes.onboarding;
 
-  runApp(CMSApp(initialScreen: initialScreen));
+  runApp(CMSApp(initialLocation: initialLocation));
 }
 
 /// [CMSApp] là Widget gốc cấu hình toàn bộ ứng dụng.
 ///
 /// Tại đây thiết lập:
 /// - [ThemeData]: Định nghĩa Style Guide (Màu sắc, Font chữ, Button Style).
-/// - [initialScreen]: Xác định màn hình hiển thị đầu tiên sau khi Splash kết thúc.
+/// - [initialLocation]: Xác định route hiển thị đầu tiên sau khi Splash kết thúc.
 class CMSApp extends StatelessWidget {
-  /// Màn hình đầu tiên được truyền vào từ hàm [main].
-  final Widget initialScreen;
+  /// Route đầu tiên được truyền vào từ hàm [main].
+  final String initialLocation;
+  final GoRouter _router;
 
-  const CMSApp({super.key, required this.initialScreen});
+  CMSApp({super.key, required this.initialLocation})
+    : _router = AppRouter.createRouter(initialLocation: initialLocation);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Google x HUST CMS',
       debugShowCheckedModeBanner: false,
+      routerConfig: _router,
 
       /// Cấu hình giao diện đồng bộ (Style Guide) dựa trên Core Layer.
       theme: ThemeData(
@@ -66,7 +69,10 @@ class CMSApp extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppColors.lightGrey),
@@ -97,8 +103,6 @@ class CMSApp extends StatelessWidget {
           ),
         ),
       ),
-
-      home: initialScreen,
     );
   }
 }

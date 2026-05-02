@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gdgocms/core/router/app_router.dart';
 
 class UpcomingEventsScreen extends StatefulWidget {
   const UpcomingEventsScreen({super.key});
@@ -71,7 +73,7 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
           ),
         ),
         leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back, color: Colors.black),
         ),
       ),
@@ -128,19 +130,7 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
           key: ValueKey(eventData['id']),
           onSwipe: () => _onSwipe(0),
           onTap: () {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                transitionDuration: const Duration(milliseconds: 600),
-                reverseTransitionDuration: const Duration(milliseconds: 500),
-                pageBuilder: (context, animation, secondaryAnimation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: EventDetailScreen(data: eventData),
-                  );
-                },
-              ),
-            );
+            context.push(AppRoutes.eventDetail, extra: eventData);
           },
           child: card,
         );
@@ -393,7 +383,7 @@ class EventDetailScreen extends StatelessWidget {
             color: Colors.black,
             size: 36,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
@@ -440,7 +430,7 @@ class EventDetailScreen extends StatelessWidget {
                   const SizedBox(height: 60),
                   Center(
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(

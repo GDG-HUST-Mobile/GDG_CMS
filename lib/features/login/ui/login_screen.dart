@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gdgocms/core/router/app_router.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/network/api_service.dart';
-import 'package:gdgocms/features/main/ui/home/ui/home_screen.dart';
-import 'package:gdgocms/features/login/ui/register_screen.dart';
 
 /// login_screen.dart
 /// Layer: Presentation
@@ -59,10 +59,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     if (success) {
       // Đăng nhập thành công, thay thế màn hình hiện tại bằng trang chủ.
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      context.go(AppRoutes.home);
     } else {
       // Cập nhật thông báo lỗi để hiển thị lên UI.
       setState(() {
@@ -76,7 +73,8 @@ class _SignInScreenState extends State<SignInScreen> {
     // 1. Tính toán kích thước màn hình thực tế (trừ đi padding hệ thống như status bar/notch)
     final double screenWidth = MediaQuery.of(context).size.width;
     final double fullHeight = MediaQuery.of(context).size.height;
-    final double safeHeight = fullHeight -
+    final double safeHeight =
+        fullHeight -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
 
@@ -103,7 +101,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.06,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -152,7 +152,9 @@ class _SignInScreenState extends State<SignInScreen> {
                             // Nút IconButton để bật/tắt hiển thị mật khẩu
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                                 color: AppColors.grey,
                                 size: safeHeight * 0.025,
                               ),
@@ -201,11 +203,15 @@ class _SignInScreenState extends State<SignInScreen> {
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleSignIn,
                             child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
                                 : Text(
-                              "Sign In",
-                              style: TextStyle(fontSize: safeHeight * 0.022),
-                            ),
+                                    "Sign In",
+                                    style: TextStyle(
+                                      fontSize: safeHeight * 0.022,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -233,7 +239,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                       color: Colors.black.withOpacity(0.05),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
-                                    )
+                                    ),
                                   ],
                                 ),
                                 child: SvgPicture.asset(
@@ -258,10 +264,8 @@ class _SignInScreenState extends State<SignInScreen> {
                               ),
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const RegisterScreen()));
-                                  },
+                                  context.push(AppRoutes.register);
+                                },
                                 child: Text(
                                   "Create an account",
                                   style: AppTextStyles.body1.copyWith(

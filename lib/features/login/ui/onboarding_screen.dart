@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gdgocms/core/router/app_router.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
-import 'package:gdgocms/features/login/ui/login_screen.dart';
 
 /// onboarding_screen.dart
 /// Layer: Presentation
@@ -71,8 +72,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Tính toán chiều cao khả dụng sau khi loại bỏ các vùng Safe Area (Tai thỏ, Home Indicator).
     double screenHeight =
         MediaQuery.of(context).size.height -
-            MediaQuery.of(context).padding.top -
-            MediaQuery.of(context).padding.bottom;
+        MediaQuery.of(context).padding.top -
+        MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -166,12 +167,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     } else {
                       // Nếu là trang cuối, điều hướng sang màn hình đăng nhập [SignInScreen].
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignInScreen()
-                        ),
-                      );
+                      context.go(AppRoutes.login);
                     }
                   },
                   child: Text(

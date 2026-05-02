@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gdgocms/core/router/app_router.dart';
 import 'package:gdgocms/core/theme/app_colors.dart';
 import 'package:gdgocms/core/theme/app_fonts.dart';
 import 'package:gdgocms/core/network/api_service.dart';
-import 'package:gdgocms/features/main/ui/home/ui/home_screen.dart';
 
 /// register_screen.dart
 /// Layer: Presentation
@@ -50,8 +51,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   /// Sau đó gọi API [AuthService.register] và điều hướng về [HomeScreen] nếu thành công.
   void _handleRegister() async {
     // 1. Validate: Kiểm tra các trường bắt buộc
-    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
-      setState(() => _errorMessage = "Vui lòng nhập đầy đủ các trường bắt buộc.");
+    if (_usernameController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      setState(
+        () => _errorMessage = "Vui lòng nhập đầy đủ các trường bắt buộc.",
+      );
       return;
     }
 
@@ -80,11 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (success) {
       // Đăng ký thành công, xóa lịch sử và vào thẳng trang chủ
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-      );
+      context.go(AppRoutes.home);
     } else {
       // Thông báo lỗi nghiệp vụ từ phía Server (trùng user/email)
       setState(() {
@@ -97,7 +98,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     // Tính toán kích thước responsive dựa trên không gian an toàn (Safe Area)
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double safeHeight = MediaQuery.of(context).size.height -
+    final double safeHeight =
+        MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
 
@@ -123,7 +125,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.06,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -131,8 +135,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                         // Nút quay lại màn hình đăng nhập
                         IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+                          onPressed: () => context.pop(),
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            color: Colors.black,
+                          ),
                         ),
 
                         Text(
@@ -148,29 +155,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Form nhập Họ và Tên trên cùng một hàng
                         Row(
                           children: [
-                            Expanded(child: _buildFieldColumn("First Name", "HUST", _firstNameController, safeHeight)),
+                            Expanded(
+                              child: _buildFieldColumn(
+                                "First Name",
+                                "HUST",
+                                _firstNameController,
+                                safeHeight,
+                              ),
+                            ),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildFieldColumn("Last Name", "GDGoC", _lastNameController, safeHeight)),
+                            Expanded(
+                              child: _buildFieldColumn(
+                                "Last Name",
+                                "GDGoC",
+                                _lastNameController,
+                                safeHeight,
+                              ),
+                            ),
                           ],
                         ),
 
                         const SizedBox(height: 16),
-                        _buildFieldColumn("Email", "example@email.com", _emailController, safeHeight),
+                        _buildFieldColumn(
+                          "Email",
+                          "example@email.com",
+                          _emailController,
+                          safeHeight,
+                        ),
 
                         const SizedBox(height: 16),
-                        _buildFieldColumn("Username", "gdgoc_cms", _usernameController, safeHeight),
+                        _buildFieldColumn(
+                          "Username",
+                          "gdgoc_cms",
+                          _usernameController,
+                          safeHeight,
+                        ),
 
                         const SizedBox(height: 16),
                         // Trường nhập mật khẩu chính
-                        _buildPasswordField("Password", _passwordController, _isPasswordVisible, (val) {
-                          setState(() => _isPasswordVisible = !_isPasswordVisible);
-                        }, safeHeight),
+                        _buildPasswordField(
+                          "Password",
+                          _passwordController,
+                          _isPasswordVisible,
+                          (val) {
+                            setState(
+                              () => _isPasswordVisible = !_isPasswordVisible,
+                            );
+                          },
+                          safeHeight,
+                        ),
 
                         const SizedBox(height: 16),
                         // Trường xác nhận lại mật khẩu để tránh gõ nhầm
-                        _buildPasswordField("Confirm Password", _confirmPasswordController, _isConfirmPasswordVisible, (val) {
-                          setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible);
-                        }, safeHeight),
+                        _buildPasswordField(
+                          "Confirm Password",
+                          _confirmPasswordController,
+                          _isConfirmPasswordVisible,
+                          (val) {
+                            setState(
+                              () => _isConfirmPasswordVisible =
+                                  !_isConfirmPasswordVisible,
+                            );
+                          },
+                          safeHeight,
+                        ),
 
                         const SizedBox(height: 24),
 
@@ -178,7 +226,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         if (_errorMessage != null)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 16),
-                            child: Text(_errorMessage!, style: TextStyle(color: AppColors.red, fontSize: safeHeight * 0.016)),
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: safeHeight * 0.016,
+                              ),
+                            ),
                           ),
 
                         // Nút SignUp thực thi lệnh đăng ký
@@ -188,8 +242,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleRegister,
                             child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : Text("Sign Up", style: TextStyle(fontSize: safeHeight * 0.02)),
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Text(
+                                    "Sign Up",
+                                    style: TextStyle(
+                                      fontSize: safeHeight * 0.02,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -198,15 +259,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Footer điều hướng ngược lại cho người dùng đã có tài khoản
                         Center(
                           child: GestureDetector(
-                            onTap: () => Navigator.pop(context),
+                            onTap: () => context.pop(),
                             child: RichText(
                               text: TextSpan(
                                 text: "Already a member? ",
-                                style: TextStyle(color: Colors.black, fontSize: safeHeight * 0.018),
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: safeHeight * 0.018,
+                                ),
                                 children: [
                                   TextSpan(
                                     text: "Sign In",
-                                    style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+                                    style: TextStyle(
+                                      color: AppColors.blue,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -234,7 +302,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   ///
   /// Giải thích "Why": Tách biệt logic ẩn hiện password để có thể áp dụng
   /// độc lập cho cả ô mật khẩu và ô xác nhận mật khẩu mà không bị trùng lặp code.
-  Widget _buildPasswordField(String label, TextEditingController controller, bool isVisible, Function(bool) toggle, double safeHeight) {
+  Widget _buildPasswordField(
+    String label,
+    TextEditingController controller,
+    bool isVisible,
+    Function(bool) toggle,
+    double safeHeight,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -246,7 +320,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: InputDecoration(
             hintText: "Enter $label",
             suffixIcon: IconButton(
-              icon: Icon(isVisible ? Icons.visibility : Icons.visibility_off, color: AppColors.grey, size: safeHeight * 0.025),
+              icon: Icon(
+                isVisible ? Icons.visibility : Icons.visibility_off,
+                color: AppColors.grey,
+                size: safeHeight * 0.025,
+              ),
               onPressed: () => toggle(isVisible),
             ),
           ),
@@ -256,13 +334,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// Helper: Tạo cột nhập liệu tiêu chuẩn gồm Label và TextField.
-  Widget _buildFieldColumn(String label, String hint, TextEditingController controller, double safeHeight) {
+  Widget _buildFieldColumn(
+    String label,
+    String hint,
+    TextEditingController controller,
+    double safeHeight,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildInputLabel(label, safeHeight),
         const SizedBox(height: 8),
-        TextField(controller: controller, decoration: InputDecoration(hintText: hint)),
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: hint),
+        ),
       ],
     );
   }
@@ -271,7 +357,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildInputLabel(String label, double safeHeight) {
     return Text(
       label,
-      style: AppTextStyles.title2.copyWith(color: Colors.black87, fontSize: safeHeight * 0.018),
+      style: AppTextStyles.title2.copyWith(
+        color: Colors.black87,
+        fontSize: safeHeight * 0.018,
+      ),
     );
   }
 }
