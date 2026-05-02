@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gdgocms/core/router/app_router.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:gdgocms/features/main/ui/home/ui/home_screen.dart';
 
 /// homepage.dart
 /// Layer: Presentation
@@ -27,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectDay;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     // Khởi tạo ngày chọn mặc định là ngày hiện tại.
     _selectDay = _focusDay;
@@ -40,19 +41,11 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+
         /// Logo đóng vai trò là nút reset hoặc chuyển đổi nhanh về [HomeScreen].
         title: GestureDetector(
-          onTap: (){
-            Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
-                  transitionDuration: const Duration(milliseconds: 400),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child,);
-                  },
-                )
-            );
+          onTap: () {
+            context.go(AppRoutes.home);
           },
           child: Padding(
             padding: const EdgeInsets.only(top: 10.0),
@@ -100,31 +93,36 @@ class _HomePageState extends State<HomePage> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 100),
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 10,
+          bottom: 100,
+        ),
         child: Column(
           children: [
             /// [Calendar Section]
             /// Hiển thị lịch để người dùng theo dõi và chọn ngày xem sự kiện.
             Container(
               decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(1, 5),
-                    )
-                  ]
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(1, 5),
+                  ),
+                ],
               ),
               padding: const EdgeInsets.only(bottom: 10),
               child: TableCalendar<Color>(
-                firstDay: DateTime.utc(2020, 1 ,1),
+                firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusDay,
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 selectedDayPredicate: (day) => isSameDay(_selectDay, day),
-                onDaySelected: (selectedDay, focusedDay){
+                onDaySelected: (selectedDay, focusedDay) {
                   // Cập nhật ngày được chọn và làm mới UI.
                   setState(() {
                     _selectDay = selectedDay;
@@ -138,23 +136,29 @@ class _HomePageState extends State<HomePage> {
                   rightChevronIcon: Icon(Icons.arrow_forward_ios, size: 16),
                 ),
                 daysOfWeekStyle: const DaysOfWeekStyle(
-                  weekendStyle: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                  weekendStyle: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
                   weekdayStyle: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 calendarStyle: CalendarStyle(
-                    defaultTextStyle: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    outsideTextStyle: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    weekendTextStyle: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
-                    todayDecoration: const BoxDecoration(
-                      color: Colors.blue,
-                      shape: BoxShape.circle,
-                    )
+                  defaultTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  outsideTextStyle: TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.normal,
+                  ),
+                  weekendTextStyle: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  todayDecoration: const BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
@@ -165,11 +169,21 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 Expanded(
-                    child: _buildMenuButton('assets/images/calender.png', 'Events', 'Check out the tech sharing,\n meetings schedule', () => ())
+                  child: _buildMenuButton(
+                    'assets/images/calender.png',
+                    'Events',
+                    'Check out the tech sharing,\n meetings schedule',
+                    () => (),
+                  ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
-                    child: _buildMenuButton('assets/images/teamwork.png', 'Teammates', 'Find Teammates to join \nthe competition', () =>())
+                  child: _buildMenuButton(
+                    'assets/images/teamwork.png',
+                    'Teammates',
+                    'Find Teammates to join \nthe competition',
+                    () => (),
+                  ),
                 ),
               ],
             ),
@@ -177,14 +191,24 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 Expanded(
-                  child: _buildMenuButton('assets/images/podium.png', 'Leaderboards', 'Active club member\nranking', () => ()),
+                  child: _buildMenuButton(
+                    'assets/images/podium.png',
+                    'Leaderboards',
+                    'Active club member\nranking',
+                    () => (),
+                  ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
-                  child: _buildMenuButton('assets/images/setting.png', 'Tools', 'Some other products\nof GDG', () => ()),
+                  child: _buildMenuButton(
+                    'assets/images/setting.png',
+                    'Tools',
+                    'Some other products\nof GDG',
+                    () => (),
+                  ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -195,7 +219,12 @@ class _HomePageState extends State<HomePage> {
   ///
   /// Giải thích "Why": Sử dụng [Column] để tách biệt rõ ràng giữa Icon (trong Bordered Box)
   /// và phần văn bản mô tả giúp người dùng dễ dàng nhận diện tính năng.
-  Widget _buildMenuButton(String imagePath, String title, String subtitle, VoidCallback onTap) {
+  Widget _buildMenuButton(
+    String imagePath,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -218,10 +247,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.contain,
-            ),
+            child: Image.asset(imagePath, fit: BoxFit.contain),
           ),
 
           const SizedBox(height: 12),
@@ -229,9 +255,9 @@ class _HomePageState extends State<HomePage> {
           Text(
             title,
             style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Colors.black
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Colors.black,
             ),
           ),
 
@@ -242,9 +268,9 @@ class _HomePageState extends State<HomePage> {
             subtitle,
             textAlign: TextAlign.center,
             style: const TextStyle(
-                fontSize: 11,
-                color: Colors.grey,
-                height: 1.3
+              fontSize: 11,
+              color: Colors.grey,
+              height: 1.3,
             ),
           ),
         ],
