@@ -173,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                     'assets/images/calender.png',
                     'Events',
                     'Check out the tech sharing,\n meetings schedule',
-                    () => (),
+                    () => context.push(AppRoutes.events),
                   ),
                 ),
                 const SizedBox(width: 15),
