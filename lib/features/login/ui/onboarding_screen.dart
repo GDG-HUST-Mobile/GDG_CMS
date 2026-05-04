@@ -60,8 +60,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<String> _pageAssets = [
     'assets/images/task.svg',
     'assets/images/event.svg',
-    'assets/images/profile.svg',
-    'assets/images/team.svg',
+    'assets/images/profile.png',
+    'assets/images/teammate.png',
   ];
 
   @override
@@ -105,14 +105,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           setState(() => _currentIndex = index),
                       itemCount: _pageAssets.length,
                       itemBuilder: (context, index) {
+                        final String assetPath = _pageAssets[index];
                         return Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: SvgPicture.asset(
-                              _pageAssets[index],
-                              width: screenWidth * 0.85,
-                              fit: BoxFit.contain,
-                            ),
+                            child: assetPath.endsWith('.png')
+                                ? Image.asset(
+                                    assetPath,
+                                    width: screenWidth * 0.85,
+                                    fit: BoxFit.contain,
+                                  )
+                                : SvgPicture.asset(
+                                    assetPath,
+                                    width: screenWidth * 0.85,
+                                    fit: BoxFit.contain,
+                                  ),
                           ),
                         );
                       },
