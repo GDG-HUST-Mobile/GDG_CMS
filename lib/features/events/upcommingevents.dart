@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:gdgocms/core/network/api_service.dart';
 import 'package:gdgocms/core/router/app_router.dart';
+import 'package:gdgocms/core/theme/app_colors.dart';
+import 'package:gdgocms/core/theme/app_fonts.dart';
 
 class UpcomingEventsScreen extends StatefulWidget {
   const UpcomingEventsScreen({super.key});
@@ -219,10 +222,7 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
       return null;
     }
     final DateTime local = parsed.toLocal();
-    final String day = local.day.toString().padLeft(2, '0');
-    final String month = local.month.toString().padLeft(2, '0');
-    final String year = local.year.toString();
-    return '$day/$month/$year';
+    return DateFormat("'Ngày' dd 'tháng' MM, yyyy").format(local);
   }
 
   String? _firstNonEmptyString(Map<String, dynamic> raw, List<String> keys) {
@@ -680,7 +680,7 @@ class EventCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
                   shape: BoxShape.circle,
@@ -688,56 +688,81 @@ class EventCard extends StatelessWidget {
                 child: Icon(
                   Icons.event,
                   color: Colors.green.shade600,
-                  size: 54,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 12),
               Row(
                 children: const [
                   _GoogleDot(color: Color(0xFF4285F4)),
-                  SizedBox(width: 6),
+                  SizedBox(width: 5),
                   _GoogleDot(color: Color(0xFFEA4335)),
-                  SizedBox(width: 6),
+                  SizedBox(width: 5),
                   _GoogleDot(color: Color(0xFFFBBC05)),
-                  SizedBox(width: 6),
+                  SizedBox(width: 5),
                   _GoogleDot(color: Color(0xFF34A853)),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+            style: AppTextStyles.h3.copyWith(
+              fontSize: 23,
+              fontWeight: FontWeight.w700,
               color: Colors.black87,
+              height: 1.25,
             ),
           ),
-          const SizedBox(height: 10),
-          _infoRow(Icons.person_outline, 'Tạo bởi: $author', Colors.blue),
           const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 16, color: AppColors.grey),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Tạo bởi: $author',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.subtitle2.copyWith(
+                    color: AppColors.grey,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Text(
             description,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: AppTextStyles.subtitle1.copyWith(
               fontSize: 15,
               color: Colors.black87,
-              height: 1.45,
+              height: 1.5,
             ),
           ),
           const Spacer(),
-          _infoRow(
-            Icons.thumb_up_alt_rounded,
-            '$vote lượt vote',
-            Colors.orange,
+          Row(
+            children: [
+              _MetaChip(
+                icon: Icons.access_time_filled,
+                label: time,
+                iconColor: AppColors.blue,
+              ),
+              const SizedBox(width: 10),
+              _MetaChip(
+                icon: Icons.thumb_up_alt_rounded,
+                label: '$vote lượt vote',
+                iconColor: AppColors.yellow,
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          _infoRow(Icons.access_time_filled, time, Colors.green),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           const Text(
             'Nhấn để xem chi tiết  •  Vuốt để chọn',
             style: TextStyle(
@@ -750,20 +775,6 @@ class EventCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _infoRow(IconData icon, String text, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ],
-    );
-  }
 }
 
 class EventDetailScreen extends StatelessWidget {
@@ -773,6 +784,14 @@ class EventDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String title = (data['title'] ?? '').toString();
+    final String author = (data['author'] ?? '').toString();
+    final String description = (data['description'] ?? '').toString();
+    final String time = (data['time'] ?? '').toString();
+    final int vote = data['vote'] is int
+        ? data['vote'] as int
+        : int.tryParse((data['vote'] ?? '0').toString()) ?? 0;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -788,114 +807,116 @@ class EventDetailScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Hero(
-              tag: 'event_card_${data['id']}',
-              child: Material(
-                color: Colors.transparent,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: EventCard(data: data),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFEAF4FF), Color(0xFFEFFAF2)],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.description, color: Colors.green, size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'Chi Tiết Mô Tả Chương Trình',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(thickness: 1.5, height: 40),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.person_outline,
-                        color: Colors.blue,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Tạo bởi: ${(data['author'] ?? '').toString()}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.thumb_up_alt_rounded,
-                        color: Colors.orange,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${(data['vote'] ?? 0).toString()} lượt vote',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
                   Text(
-                    data['description'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.6,
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h3.copyWith(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
                       color: Colors.black87,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 60),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 15,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      icon: const Icon(Icons.favorite, color: Colors.white),
-                      label: const Text(
-                        'Tham gia nhanh',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Thông tin sự kiện',
+                    style: AppTextStyles.subtitle2.copyWith(fontSize: 13),
                   ),
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _DetailInfoBox(
+                    icon: Icons.access_time_filled,
+                    label: time,
+                    iconColor: AppColors.blue,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _DetailInfoBox(
+                    icon: Icons.person_outline,
+                    label: author,
+                    iconColor: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _DetailInfoBox(
+                    icon: Icons.thumb_up_alt_rounded,
+                    label: '$vote vote',
+                    iconColor: AppColors.yellow,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Icon(Icons.description, color: AppColors.primary, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  'Mô tả chi tiết',
+                  style: AppTextStyles.title1.copyWith(
+                    color: Colors.black87,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              description,
+              style: AppTextStyles.subtitle1.copyWith(
+                fontSize: 16,
+                color: Colors.black87,
+                height: 1.6,
+              ),
+            ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: () => context.pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: const StadiumBorder(),
+            ),
+            icon: const Icon(Icons.favorite, color: Colors.white),
+            label: Text(
+              'Tham gia ngay',
+              style: AppTextStyles.title2.copyWith(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -909,9 +930,89 @@ class _GoogleDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 10,
-      height: 10,
+      width: 8,
+      height: 8,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.subtitle2.copyWith(
+              color: AppColors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailInfoBox extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+
+  const _DetailInfoBox({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.lightGrey),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: iconColor),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.subtitle2.copyWith(
+              fontSize: 12,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
