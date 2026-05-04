@@ -124,37 +124,40 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
   }
 
   Map<String, dynamic> _mapEvent(Map<String, dynamic> raw) {
-    final String id = _firstNonEmptyString(raw, const ['id', '_id']) ?? '';
+    final String id = _readEventId(raw);
     final String title =
-        _firstNonEmptyString(raw, const ['title', 'name']) ?? 'Untitled Event';
+        _firstNonEmptyString(raw, const ['title']) ?? 'Untitled Event';
     final String description =
         _firstNonEmptyString(raw, const [
-          'description',
           'content',
+          'description',
           'details',
           'summary',
         ]) ??
         '';
-    final String location =
-        _firstNonEmptyString(raw, const ['location', 'venue', 'address']) ?? '';
-    final String type =
-        _firstNonEmptyString(raw, const ['type', 'mode', 'format']) ?? '';
+    final String author =
+        _firstNonEmptyString(raw, const ['author', 'username']) ?? 'Ẩn danh';
+    final int vote = _readVote(raw['vote']);
     final String time = _buildTime(raw);
 
     return <String, dynamic>{
       'id': id.isNotEmpty ? id : title,
       'title': title,
       'time': time,
-      'type': type,
-      'location': location,
+      'author': author,
+      'vote': vote,
       'description': description,
       'notifyTo': raw['notifyTo'],
       'confirmed': raw['confirmed'],
-      'vote': raw['vote'],
     };
   }
 
   String _buildTime(Map<String, dynamic> raw) {
+    final String? createdAt = _formatCreatedAt(raw['createdAt']);
+    if (createdAt != null) {
+      return createdAt;
+    }
+
     final String? timeText = _firstNonEmptyString(raw, const [
       'time',
       'dateTime',
@@ -179,6 +182,47 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
       return '$date - $clock';
     }
     return date ?? '';
+  }
+
+  String _readEventId(Map<String, dynamic> raw) {
+    final dynamic idRaw = raw['_id'] ?? raw['id'];
+    if (idRaw is Map && idRaw['\$oid'] != null) {
+      return idRaw['\$oid'].toString();
+    }
+    return idRaw?.toString() ?? '';
+  }
+
+  int _readVote(dynamic voteRaw) {
+    if (voteRaw is int) {
+      return voteRaw;
+    }
+    if (voteRaw is String) {
+      return int.tryParse(voteRaw) ?? 0;
+    }
+    return 0;
+  }
+
+  String? _formatCreatedAt(dynamic createdAtRaw) {
+    String? isoString;
+    if (createdAtRaw is String) {
+      isoString = createdAtRaw;
+    } else if (createdAtRaw is Map && createdAtRaw['\$date'] != null) {
+      isoString = createdAtRaw['\$date'].toString();
+    }
+
+    if (isoString == null || isoString.isEmpty) {
+      return null;
+    }
+
+    final DateTime? parsed = DateTime.tryParse(isoString);
+    if (parsed == null) {
+      return null;
+    }
+    final DateTime local = parsed.toLocal();
+    final String day = local.day.toString().padLeft(2, '0');
+    final String month = local.month.toString().padLeft(2, '0');
+    final String year = local.year.toString();
+    return '$day/$month/$year';
   }
 
   String? _firstNonEmptyString(Map<String, dynamic> raw, List<String> keys) {
@@ -434,16 +478,16 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
                             (eventData['time'] ?? '').toString(),
                             Colors.blue,
                           ),
-                        if ((eventData['location'] ?? '').toString().isNotEmpty)
+                        if ((eventData['author'] ?? '').toString().isNotEmpty)
                           _buildListMetaRow(
-                            Icons.location_on,
-                            (eventData['location'] ?? '').toString(),
-                            Colors.red,
+                            Icons.person_outline,
+                            'Tạo bởi: ${(eventData['author'] ?? '').toString()}',
+                            Colors.green,
                           ),
-                        if ((eventData['type'] ?? '').toString().isNotEmpty)
+                        if (eventData['vote'] != null)
                           _buildListMetaRow(
-                            Icons.tag,
-                            (eventData['type'] ?? '').toString(),
+                            Icons.thumb_up_alt_rounded,
+                            '${eventData['vote']} lượt vote',
                             Colors.orange,
                           ),
                       ],
@@ -605,6 +649,14 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String title = (data['title'] ?? '').toString();
+    final String author = (data['author'] ?? '').toString();
+    final String description = (data['description'] ?? '').toString();
+    final int vote = data['vote'] is int
+        ? data['vote'] as int
+        : int.tryParse((data['vote'] ?? '0').toString()) ?? 0;
+    final String time = (data['time'] ?? '').toString();
+
     return Container(
       width: double.infinity,
       height: 480,
@@ -623,33 +675,69 @@ class EventCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.event, color: Colors.green.shade600, size: 80),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.event,
+                  color: Colors.green.shade600,
+                  size: 54,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Row(
+                children: const [
+                  _GoogleDot(color: Color(0xFF4285F4)),
+                  SizedBox(width: 6),
+                  _GoogleDot(color: Color(0xFFEA4335)),
+                  SizedBox(width: 6),
+                  _GoogleDot(color: Color(0xFFFBBC05)),
+                  SizedBox(width: 6),
+                  _GoogleDot(color: Color(0xFF34A853)),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           Text(
-            data['title'] ?? '',
-            textAlign: TextAlign.center,
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 16),
-          _infoRow(Icons.access_time_filled, data['time'] ?? '', Colors.blue),
-          const SizedBox(height: 12),
-          _infoRow(Icons.location_on, data['location'] ?? '', Colors.red),
-          const SizedBox(height: 12),
-          _infoRow(Icons.tag, data['type'] ?? '', Colors.orange),
+          const SizedBox(height: 10),
+          _infoRow(Icons.person_outline, 'Tạo bởi: $author', Colors.blue),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.black87,
+              height: 1.45,
+            ),
+          ),
           const Spacer(),
+          _infoRow(
+            Icons.thumb_up_alt_rounded,
+            '$vote lượt vote',
+            Colors.orange,
+          ),
+          const SizedBox(height: 8),
+          _infoRow(Icons.access_time_filled, time, Colors.green),
+          const SizedBox(height: 10),
           const Text(
             'Nhấn để xem chi tiết  •  Vuốt để chọn',
             style: TextStyle(
@@ -732,6 +820,44 @@ class EventDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const Divider(thickness: 1.5, height: 40),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.person_outline,
+                        color: Colors.blue,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tạo bởi: ${(data['author'] ?? '').toString()}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.thumb_up_alt_rounded,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${(data['vote'] ?? 0).toString()} lượt vote',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
                   Text(
                     data['description'] ?? '',
                     style: const TextStyle(
@@ -772,6 +898,20 @@ class EventDetailScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GoogleDot extends StatelessWidget {
+  final Color color;
+  const _GoogleDot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
